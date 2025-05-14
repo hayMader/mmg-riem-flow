@@ -8,27 +8,22 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
-import { getAreaSettings, getVisitorData } from '@/utils/api';
-import { AreaSettings, VisitorData } from '@/types';
+import { getAreaSettings } from '@/utils/api';
+import { AreaStatus } from '@/types';
 
 const Admin = () => {
-  const [areas, setAreas] = useState<AreaSettings[]>([]);
-  const [visitorData, setVisitorData] = useState<VisitorData[]>([]);
+  const [areas, setAreas] = useState<AreaStatus[]>([]);
   const [selectedArea, setSelectedArea] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [areaData, visitors] = await Promise.all([
-          getAreaSettings(),
-          getVisitorData(),
-        ]);
+        const areaData = await getAreaSettings();
         
         setAreas(areaData);
-        setVisitorData(visitors);
         if (areaData.length > 0) {
-          setSelectedArea(areaData[0].id);
+          setSelectedArea(areaData[0].area_number);
         }
       } catch (error) {
         console.error('Error fetching initial data:', error);
@@ -45,15 +40,14 @@ const Admin = () => {
     fetchInitialData();
   }, []);
 
-  const handleAreaUpdate = (updatedArea: AreaSettings) => {
+  const handleAreaUpdate = (updatedArea: AreaStatus) => {
     setAreas(areas.map(area => 
-      area.id === updatedArea.id ? updatedArea : area
+      area.area_number === updatedArea.area_number ? updatedArea : area
     ));
   };
 
-  const handleDataUpdate = (newVisitorData: VisitorData[], newSettings: AreaSettings[]) => {
-    setVisitorData(newVisitorData);
-    setAreas(newSettings);
+  const handleDataUpdate = (newAreaStatus: AreaStatus[]) => {
+    setAreas(newAreaStatus);
   };
 
   // Group areas by type (halls, parking, etc.)
@@ -63,8 +57,15 @@ const Admin = () => {
     area.area_name.startsWith('C')
   );
   
-  const parking = areas.filter(area => 
-    area.area_name.startsWith('P')
+  const entrances = areas.filter(area => 
+    area.area_name.toLowerCase().includes('eingang')
+  );
+  
+  const other = areas.filter(area => 
+    !area.area_name.startsWith('A') && 
+    !area.area_name.startsWith('B') && 
+    !area.area_name.startsWith('C') &&
+    !area.area_name.toLowerCase().includes('eingang')
   );
 
   return (
@@ -102,10 +103,10 @@ const Admin = () => {
                       <div className="flex flex-wrap gap-2">
                         {halls.map(area => (
                           <Button
-                            key={area.id}
-                            variant={selectedArea === area.id ? "default" : "outline"}
+                            key={area.area_number}
+                            variant={selectedArea === area.area_number ? "default" : "outline"}
                             size="sm"
-                            onClick={() => setSelectedArea(area.id)}
+                            onClick={() => setSelectedArea(area.area_number)}
                           >
                             {area.area_name}
                           </Button>
@@ -114,20 +115,38 @@ const Admin = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-muted-foreground">Parkplätze</h4>
+                      <h4 className="text-sm font-medium text-muted-foreground">Eingänge</h4>
                       <div className="flex flex-wrap gap-2">
-                        {parking.map(area => (
+                        {entrances.map(area => (
                           <Button
-                            key={area.id}
-                            variant={selectedArea === area.id ? "default" : "outline"}
+                            key={area.area_number}
+                            variant={selectedArea === area.area_number ? "default" : "outline"}
                             size="sm"
-                            onClick={() => setSelectedArea(area.id)}
+                            onClick={() => setSelectedArea(area.area_number)}
                           >
                             {area.area_name}
                           </Button>
                         ))}
                       </div>
                     </div>
+
+                    {other.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-muted-foreground">Andere Bereiche</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {other.map(area => (
+                            <Button
+                              key={area.area_number}
+                              variant={selectedArea === area.area_number ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedArea(area.area_number)}
+                            >
+                              {area.area_name}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </ScrollArea>
               </div>
@@ -135,7 +154,7 @@ const Admin = () => {
               <div className="lg:col-span-2">
                 {selectedArea !== null && (
                   <AreaSettingsForm
-                    area={areas.find(a => a.id === selectedArea)!}
+                    area={areas.find(a => a.area_number === selectedArea)!}
                     onUpdate={handleAreaUpdate}
                   />
                 )}

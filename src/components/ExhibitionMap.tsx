@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { VisitorData, AreaSettings } from '@/types';
-import { getVisitorData, getAreaSettings, getOccupancyLevel, getOccupancyColor } from '@/utils/api';
+import { AreaStatus } from '@/types';
+import { getAreaSettings, getOccupancyLevel, getOccupancyColor } from '@/utils/api';
 import { RefreshCw } from 'lucide-react';
 
 interface ExhibitionMapProps {
   autoRefresh?: boolean;
   refreshInterval?: number;
-  onDataUpdate?: (visitorData: VisitorData[], settings: AreaSettings[]) => void;
+  onDataUpdate?: (areaStatus: AreaStatus[]) => void;
 }
 
 const ExhibitionMap: React.FC<ExhibitionMapProps> = ({ 
@@ -16,8 +16,7 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
   refreshInterval = 60000, // 1 minute by default
   onDataUpdate 
 }) => {
-  const [visitorData, setVisitorData] = useState<VisitorData[]>([]);
-  const [areaSettings, setAreaSettings] = useState<AreaSettings[]>([]);
+  const [areaStatus, setAreaStatus] = useState<AreaStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
@@ -26,17 +25,13 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
   const fetchData = async () => {
     try {
       setIsRefreshing(true);
-      const [newVisitorData, newAreaSettings] = await Promise.all([
-        getVisitorData(),
-        getAreaSettings(),
-      ]);
+      const newAreaStatus = await getAreaSettings();
       
-      setVisitorData(newVisitorData);
-      setAreaSettings(newAreaSettings);
+      setAreaStatus(newAreaStatus);
       setLastRefreshed(new Date());
       
       if (onDataUpdate) {
-        onDataUpdate(newVisitorData, newAreaSettings);
+        onDataUpdate(newAreaStatus);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -81,12 +76,6 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
     );
   }
 
-  // Get visitor count for each area
-  const getVisitorCountForArea = (areaId: number) => {
-    const areaData = visitorData.find(data => data.area_number === areaId);
-    return areaData?.amount_visitors || 0;
-  };
-
   return (
     <div className="relative bg-white rounded-lg shadow-md overflow-hidden">
       <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
@@ -114,20 +103,20 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
           {/* Areas overlays */}
           <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 800">
             {/* Exhibition halls */}
-            {areaSettings.map(area => {
-              const visitorCount = getVisitorCountForArea(area.id);
-              const thresholds = area.thresholds || { low: 100, medium: 300 };
+            {areaStatus.map((area) => {
+              const visitorCount = area.amount_visitors;
+              const thresholds = area.thresholds;
               const occupancyLevel = getOccupancyLevel(visitorCount, thresholds);
               const fillColor = getOccupancyColor(occupancyLevel);
               
               return (
-                <g key={area.id}>
+                <g key={area.area_number}>
                   <rect
                     x={area.x}
                     y={area.y}
                     width={area.width}
                     height={area.height}
-                    fill={fillColor}
+                    fill={area.highlight || fillColor}
                     fillOpacity={0.7}
                     stroke="#667080"
                     strokeWidth={1}

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,16 +11,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
-import { AreaSettings } from '@/types';
-import { updateAreaSettings } from '@/utils/api';
+import { AreaStatus, Threshold } from '@/types';
+import { updateAreaSettings, updateThreshold, getThresholds } from '@/utils/api';
 
 interface AreaSettingsFormProps {
-  area: AreaSettings;
-  onUpdate: (updatedArea: AreaSettings) => void;
+  area: AreaStatus;
+  onUpdate: (updatedArea: AreaStatus) => void;
 }
 
 const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) => {
-  const [formData, setFormData] = useState<Partial<AreaSettings>>({
+  const [formData, setFormData] = useState<Partial<AreaStatus>>({
     area_name: area.area_name,
     highlight: area.highlight || '',
     capacity_usage: area.capacity_usage,
@@ -31,11 +31,24 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
     thresholds: area.thresholds || { low: 100, medium: 300 },
   });
   
+  const [thresholds, setThresholds] = useState<Threshold[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchThresholds = async () => {
+      setIsLoading(true);
+      const data = await getThresholds(area.area_number);
+      setThresholds(data);
+      setIsLoading(false);
+    };
+
+    fetchThresholds();
+  }, [area.area_number]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: keyof AreaSettings | 'thresholdLow' | 'thresholdMedium'
+    field: keyof AreaStatus | 'thresholdLow' | 'thresholdMedium'
   ) => {
     const value = e.target.value;
     
@@ -71,13 +84,50 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
     setIsSubmitting(true);
     
     try {
-      const updatedArea = await updateAreaSettings(area.id, formData);
-      onUpdate(updatedArea);
+      // Update the area settings
+      const areaData = {
+        area_name: formData.area_name,
+        highlight: formData.highlight || null,
+        capacity_usage: formData.capacity_usage,
+        x: formData.x,
+        y: formData.y,
+        width: formData.width,
+        height: formData.height,
+      };
       
-      toast({
-        title: 'Einstellungen aktualisiert',
-        description: `Die Einstellungen für ${area.area_name} wurden erfolgreich aktualisiert.`,
-      });
+      const updatedArea = await updateAreaSettings(area.area_number, areaData);
+      
+      // Update thresholds if they were changed
+      if (thresholds.length >= 2) {
+        // Assuming first threshold is 'low' and second is 'medium'
+        if (formData.thresholds?.low !== area.thresholds.low) {
+          await updateThreshold(thresholds[0].id, {
+            upper_threshold: formData.thresholds?.low || 0
+          });
+        }
+        
+        if (formData.thresholds?.medium !== area.thresholds.medium) {
+          await updateThreshold(thresholds[1].id, {
+            upper_threshold: formData.thresholds?.medium || 0
+          });
+        }
+      }
+      
+      if (updatedArea) {
+        // Create an updated area status object that combines the updated area and existing thresholds
+        const updatedAreaStatus: AreaStatus = {
+          ...area,
+          ...updatedArea,
+          thresholds: formData.thresholds || area.thresholds
+        };
+        
+        onUpdate(updatedAreaStatus);
+        
+        toast({
+          title: 'Einstellungen aktualisiert',
+          description: `Die Einstellungen für ${area.area_name} wurden erfolgreich aktualisiert.`,
+        });
+      }
     } catch (error) {
       console.error('Error updating area settings:', error);
       toast({
@@ -90,6 +140,16 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
     }
   };
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Einstellungen werden geladen...</CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -100,21 +160,21 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor={`area-name-${area.id}`}>Bereichsname</Label>
+              <Label htmlFor={`area-name-${area.area_number}`}>Bereichsname</Label>
               <Input
-                id={`area-name-${area.id}`}
+                id={`area-name-${area.area_number}`}
                 value={formData.area_name}
                 onChange={(e) => handleChange(e, 'area_name')}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor={`highlight-${area.id}`}>Highlight-Farbe (optional)</Label>
+              <Label htmlFor={`highlight-${area.area_number}`}>Highlight-Farbe (optional)</Label>
               <div className="flex items-center space-x-2">
                 <Input
-                  id={`highlight-${area.id}`}
+                  id={`highlight-${area.area_number}`}
                   type="text"
-                  value={formData.highlight}
+                  value={formData.highlight || ''}
                   onChange={(e) => handleChange(e, 'highlight')}
                   placeholder="#RRGGBB"
                 />
@@ -130,21 +190,21 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor={`threshold-low-${area.id}`}>Schwellwert Niedrig</Label>
+              <Label htmlFor={`threshold-low-${area.area_number}`}>Schwellwert Niedrig</Label>
               <Input
-                id={`threshold-low-${area.id}`}
+                id={`threshold-low-${area.area_number}`}
                 type="number"
-                value={formData.thresholds?.low}
+                value={formData.thresholds?.low || 0}
                 onChange={(e) => handleChange(e, 'thresholdLow')}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor={`threshold-medium-${area.id}`}>Schwellwert Mittel</Label>
+              <Label htmlFor={`threshold-medium-${area.area_number}`}>Schwellwert Mittel</Label>
               <Input
-                id={`threshold-medium-${area.id}`}
+                id={`threshold-medium-${area.area_number}`}
                 type="number"
-                value={formData.thresholds?.medium}
+                value={formData.thresholds?.medium || 0}
                 onChange={(e) => handleChange(e, 'thresholdMedium')}
               />
             </div>
@@ -152,9 +212,9 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor={`x-${area.id}`}>X-Position</Label>
+              <Label htmlFor={`x-${area.area_number}`}>X-Position</Label>
               <Input
-                id={`x-${area.id}`}
+                id={`x-${area.area_number}`}
                 type="number"
                 value={formData.x}
                 onChange={(e) => handleChange(e, 'x')}
@@ -162,9 +222,9 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor={`y-${area.id}`}>Y-Position</Label>
+              <Label htmlFor={`y-${area.area_number}`}>Y-Position</Label>
               <Input
-                id={`y-${area.id}`}
+                id={`y-${area.area_number}`}
                 type="number"
                 value={formData.y}
                 onChange={(e) => handleChange(e, 'y')}
@@ -172,9 +232,9 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor={`width-${area.id}`}>Breite</Label>
+              <Label htmlFor={`width-${area.area_number}`}>Breite</Label>
               <Input
-                id={`width-${area.id}`}
+                id={`width-${area.area_number}`}
                 type="number"
                 value={formData.width}
                 onChange={(e) => handleChange(e, 'width')}
@@ -182,9 +242,9 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor={`height-${area.id}`}>Höhe</Label>
+              <Label htmlFor={`height-${area.area_number}`}>Höhe</Label>
               <Input
-                id={`height-${area.id}`}
+                id={`height-${area.area_number}`}
                 type="number"
                 value={formData.height}
                 onChange={(e) => handleChange(e, 'height')}
@@ -193,9 +253,9 @@ const AreaSettingsForm: React.FC<AreaSettingsFormProps> = ({ area, onUpdate }) =
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor={`capacity-${area.id}`}>Kapazität</Label>
+            <Label htmlFor={`capacity-${area.area_number}`}>Kapazität</Label>
             <Input
-              id={`capacity-${area.id}`}
+              id={`capacity-${area.area_number}`}
               type="number"
               value={formData.capacity_usage}
               onChange={(e) => handleChange(e, 'capacity_usage')}

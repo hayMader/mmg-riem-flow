@@ -1,134 +1,106 @@
 
-import { VisitorData, AreaSettings, OccupancyLevel } from "../types";
-
-// Mock data for visitor data
-const mockVisitorData: VisitorData[] = Array.from({ length: 27 }, (_, i) => ({
-  id: i + 1,
-  timestamp: new Date().toISOString(),
-  area_number: i + 1,
-  amount_visitors: Math.floor(Math.random() * 1000),
-}));
-
-// Mock data for area settings
-const mockAreaSettings: AreaSettings[] = [
-  // Hall A Series
-  ...Array.from({ length: 6 }, (_, i) => ({
-    id: i + 1,
-    last_updated: new Date().toISOString(),
-    area_name: `A${i + 1}`,
-    highlight: "",
-    capacity_usage: Math.floor(Math.random() * 200) + 400,
-    x: 100 + i * 120,
-    y: 600,
-    width: 100,
-    height: 140,
-    thresholds: {
-      low: 100,
-      medium: 300,
-    },
-  })),
-  
-  // Hall B Series
-  ...Array.from({ length: 7 }, (_, i) => ({
-    id: 7 + i,
-    last_updated: new Date().toISOString(),
-    area_name: i === 0 ? "B0" : `B${i}`,
-    highlight: "",
-    capacity_usage: Math.floor(Math.random() * 200) + 400,
-    x: i === 0 ? 50 : 100 + (i - 1) * 120,
-    y: i === 0 ? 480 : 450,
-    width: i === 0 ? 80 : 100,
-    height: i === 0 ? 80 : 120,
-    thresholds: {
-      low: 100,
-      medium: 300,
-    },
-  })),
-
-  // Hall C Series
-  ...Array.from({ length: 6 }, (_, i) => ({
-    id: 14 + i,
-    last_updated: new Date().toISOString(),
-    area_name: `C${i + 1}`,
-    highlight: "",
-    capacity_usage: Math.floor(Math.random() * 200) + 400,
-    x: 100 + i * 120,
-    y: 320,
-    width: 100,
-    height: 120,
-    thresholds: {
-      low: 100,
-      medium: 300,
-    },
-  })),
-
-  // Parking Areas
-  ...Array.from({ length: 8 }, (_, i) => ({
-    id: 20 + i,
-    last_updated: new Date().toISOString(),
-    area_name: `P${i + 1}`,
-    highlight: "",
-    capacity_usage: Math.floor(Math.random() * 200) + 100,
-    x: i < 3 ? 200 + i * 180 : 680 + (i - 3) * 100,
-    y: i < 3 ? 180 : 550,
-    width: 80,
-    height: 60,
-    thresholds: {
-      low: 50,
-      medium: 150,
-    },
-  })),
-];
+import { VisitorData, AreaSettings, OccupancyLevel, AreaStatus, Threshold } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
 // Function to get the latest visitor data
 export const getVisitorData = async (): Promise<VisitorData[]> => {
-  // In a real app, this would be a fetch to your API
-  // return await fetch('/api/visitors').then(res => res.json());
-  
-  // For now, return mock data with a timestamp within the last hour
-  const now = new Date();
-  return mockVisitorData.map(data => ({
-    ...data,
-    // Random timestamp within the last hour
-    timestamp: new Date(
-      now.getTime() - Math.floor(Math.random() * 60) * 60000
-    ).toISOString(),
-    // Random visitor count between 0 and 1000
-    amount_visitors: Math.floor(Math.random() * 1000),
-  }));
+  try {
+    const { data, error } = await supabase
+      .from('visitor_data')
+      .select('*')
+      .order('timestamp', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching visitor data:', error);
+    return [];
+  }
 };
 
 // Function to get area settings
-export const getAreaSettings = async (): Promise<AreaSettings[]> => {
-  // In a real app, this would be a fetch to your API
-  // return await fetch('/api/settings').then(res => res.json());
-  
-  // For now, return mock data
-  return mockAreaSettings;
+export const getAreaSettings = async (): Promise<AreaStatus[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('area_status')
+      .select('*');
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching area settings:', error);
+    return [];
+  }
+};
+
+// Function to get thresholds for a specific area
+export const getThresholds = async (areaId: number): Promise<Threshold[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('thresholds')
+      .select('*')
+      .eq('setting_id', areaId)
+      .order('upper_threshold', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching thresholds:', error);
+    return [];
+  }
 };
 
 // Function to update area settings
-export const updateAreaSettings = async (areaId: number, settings: Partial<AreaSettings>): Promise<AreaSettings> => {
-  // In a real app, this would be a POST/PUT to your API
-  // return await fetch(`/api/settings/${areaId}`, {
-  //   method: 'PUT',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(settings)
-  // }).then(res => res.json());
-  
-  // For now, update the mock data and return it
-  const areaIndex = mockAreaSettings.findIndex(area => area.id === areaId);
-  if (areaIndex === -1) {
-    throw new Error(`Area with id ${areaId} not found`);
+export const updateAreaSettings = async (areaId: number, settings: Partial<AreaSettings>): Promise<AreaSettings | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('area_settings')
+      .update(settings)
+      .eq('id', areaId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating area settings:', error);
+    return null;
   }
-  
-  mockAreaSettings[areaIndex] = {
-    ...mockAreaSettings[areaIndex],
-    ...settings,
-    last_updated: new Date().toISOString(),
-  };
-  
-  return mockAreaSettings[areaIndex];
+};
+
+// Function to update threshold
+export const updateThreshold = async (thresholdId: number, threshold: Partial<Threshold>): Promise<Threshold | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('thresholds')
+      .update(threshold)
+      .eq('id', thresholdId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating threshold:', error);
+    return null;
+  }
+};
+
+// Function to add visitor data
+export const addVisitorData = async (visitorData: Omit<VisitorData, 'id' | 'timestamp'>): Promise<VisitorData | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('visitor_data')
+      .insert(visitorData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error adding visitor data:', error);
+    return null;
+  }
 };
 
 // Function to determine occupancy level based on visitor count and thresholds

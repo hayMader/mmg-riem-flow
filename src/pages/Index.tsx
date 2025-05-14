@@ -1,16 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/Header';
 import ExhibitionMap from '@/components/ExhibitionMap';
 import { formatDateTime } from '@/utils/api';
-import { VisitorData, AreaSettings } from '@/types';
-import { getLatestTimestamp } from '@/utils/api';
+import { AreaStatus } from '@/types';
 
 const Index = () => {
   const [latestTimestamp, setLatestTimestamp] = useState<string>('');
   
-  const handleDataUpdate = (visitorData: VisitorData[], settings: AreaSettings[]) => {
-    const timestamp = getLatestTimestamp(visitorData);
+  const handleDataUpdate = (areaStatus: AreaStatus[]) => {
+    const timestamp = new Date().toISOString();
     setLatestTimestamp(formatDateTime(timestamp));
   };
   
