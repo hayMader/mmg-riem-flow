@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -20,33 +21,43 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // For demonstration purposes - in a real app, you'd validate against a backend
-    setTimeout(() => {
-      if (username === 'admin' && password === 'password') {
-        // Set a simple token in localStorage
-        localStorage.setItem('auth', JSON.stringify({ 
-          isAuthenticated: true, 
-          username: 'admin',
-          name: 'Franziska Oberländer'
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password,
+      });
+
+      if (error) {
+        toast({
+          title: "Anmeldung fehlgeschlagen",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else if (data.user) {
+        localStorage.setItem('auth', JSON.stringify({
+          isAuthenticated: true,
+          username: data.user.email,
+          name: data.user.user_metadata?.name || 'Benutzer',
         }));
         navigate('/admin');
         toast({
           title: "Erfolgreich angemeldet",
           description: "Willkommen im Management Dashboard.",
         });
-      } else {
-        toast({
-          title: "Anmeldung fehlgeschlagen",
-          description: "Bitte überprüfen Sie Ihren Benutzernamen und Ihr Passwort.",
-          variant: "destructive"
-        });
       }
+    } catch (err) {
+      toast({
+        title: "Ein Fehler ist aufgetreten",
+        description: "Bitte versuchen Sie es später erneut.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
