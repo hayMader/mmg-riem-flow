@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +13,7 @@ import {
 } from '@/components/ui/accordion';
 import { 
   Settings, 
-  SliderHorizontal, 
+  SlidersHorizontal, 
   Move, 
   Save,
   Plus,
@@ -228,7 +227,7 @@ const AreaSettingsAccordion: React.FC<AreaSettingsAccordionProps> = ({ area, onU
         <AccordionItem value="thresholds">
           <AccordionTrigger className="py-4">
             <div className="flex items-center">
-              <SliderHorizontal className="mr-2 h-5 w-5" />
+              <SlidersHorizontal className="mr-2 h-5 w-5" />
               <span>Grenzwerte Besucherzahl</span>
             </div>
           </AccordionTrigger>

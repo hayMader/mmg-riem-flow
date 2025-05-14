@@ -1,4 +1,3 @@
-
 import { VisitorData, AreaSettings, OccupancyLevel, AreaStatus, Threshold } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,10 +25,63 @@ export const getAreaSettings = async (): Promise<AreaStatus[]> => {
       .select('*');
     
     if (error) throw error;
-    return data || [];
+    
+    // Transform the data to match the expected AreaStatus type
+    const transformedData: AreaStatus[] = data?.map(item => ({
+      area_number: item.area_number,
+      area_name: item.area_name || '',
+      capacity_usage: item.capacity_usage || 0,
+      x: item.x || 0,
+      y: item.y || 0,
+      width: item.width || 0,
+      height: item.height || 0,
+      highlight: item.highlight,
+      amount_visitors: item.amount_visitors || 0,
+      thresholds: transformThresholds(item.thresholds)
+    })) || [];
+    
+    return transformedData;
   } catch (error) {
     console.error('Error fetching area settings:', error);
     return [];
+  }
+};
+
+// Helper function to transform thresholds from JSON to the expected format
+const transformThresholds = (thresholds: any): { low: number; medium: number } => {
+  // Default values
+  const defaultThresholds = { low: 100, medium: 300 };
+  
+  // If thresholds is null or not an object, return default values
+  if (!thresholds || typeof thresholds !== 'object') {
+    return defaultThresholds;
+  }
+  
+  try {
+    // If thresholds is already in the expected format
+    if (typeof thresholds.low === 'number' && typeof thresholds.medium === 'number') {
+      return thresholds;
+    }
+    
+    // If thresholds is an array of objects with upper_threshold and color
+    if (Array.isArray(thresholds)) {
+      const sortedThresholds = [...thresholds].sort((a, b) => 
+        (a.upper_threshold || 0) - (b.upper_threshold || 0)
+      );
+      
+      if (sortedThresholds.length >= 2) {
+        return {
+          low: sortedThresholds[0].upper_threshold || defaultThresholds.low,
+          medium: sortedThresholds[1].upper_threshold || defaultThresholds.medium
+        };
+      }
+    }
+    
+    // In any other case, return the default values
+    return defaultThresholds;
+  } catch (e) {
+    console.error('Error transforming thresholds:', e);
+    return defaultThresholds;
   }
 };
 
