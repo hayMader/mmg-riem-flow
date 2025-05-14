@@ -9,12 +9,16 @@ interface ExhibitionMapProps {
   autoRefresh?: boolean;
   refreshInterval?: number;
   onDataUpdate?: (areaStatus: AreaStatus[]) => void;
+  onAreaSelect?: (areaNumber: number) => void;
+  selectedArea?: number | null;
 }
 
 const ExhibitionMap: React.FC<ExhibitionMapProps> = ({ 
   autoRefresh = true, 
   refreshInterval = 60000, // 1 minute by default
-  onDataUpdate 
+  onDataUpdate,
+  onAreaSelect,
+  selectedArea = null
 }) => {
   const [areaStatus, setAreaStatus] = useState<AreaStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,6 +70,13 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
   const handleRefresh = () => {
     fetchData();
   };
+  
+  // Handle area click
+  const handleAreaClick = (areaNumber: number) => {
+    if (onAreaSelect) {
+      onAreaSelect(areaNumber);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -77,7 +88,7 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
   }
 
   return (
-    <div className="relative bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="relative bg-white rounded-lg overflow-hidden">
       <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
         <button 
           onClick={handleRefresh}
@@ -92,7 +103,7 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
       </div>
       
       {/* Map container with the exhibition layout */}
-      <div className="relative w-full h-[700px] overflow-auto bg-occupancy-bg p-4">
+      <div className="relative w-full h-[500px] overflow-auto bg-occupancy-bg p-4">
         <div className="relative w-full h-full">
           {/* Floor plan background image */}
           <div className="absolute inset-0 bg-gray-100">
@@ -108,6 +119,7 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
               const thresholds = area.thresholds;
               const occupancyLevel = getOccupancyLevel(visitorCount, thresholds);
               const fillColor = getOccupancyColor(occupancyLevel);
+              const isSelected = selectedArea === area.area_number;
               
               return (
                 <g key={area.area_number}>
@@ -118,9 +130,10 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
                     height={area.height}
                     fill={area.highlight || fillColor}
                     fillOpacity={0.7}
-                    stroke="#667080"
-                    strokeWidth={1}
-                    className="exhibition-hall"
+                    stroke={isSelected ? "#000" : "#667080"}
+                    strokeWidth={isSelected ? 2 : 1}
+                    className="exhibition-hall cursor-pointer"
+                    onClick={() => handleAreaClick(area.area_number)}
                   />
                   <text
                     x={area.x + area.width / 2}
@@ -152,12 +165,6 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
             <text x="600" y="770" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16">Willy-Brandt-Allee</text>
             <text x="120" y="400" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16" transform="rotate(90,120,400)">Olof-Palme-Straße</text>
             <text x="1080" y="400" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16" transform="rotate(270,1080,400)">Am Messesee</text>
-            
-            {/* Cardinal directions */}
-            <text x="1000" y="280" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16">Nordost</text>
-            <text x="200" y="280" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16">Nordwest</text>
-            <text x="200" y="560" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16">West</text>
-            <text x="1000" y="560" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16">Ost</text>
           </svg>
         </div>
       </div>

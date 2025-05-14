@@ -9,13 +9,161 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      area_settings: {
+        Row: {
+          area_name: string
+          capacity_usage: number
+          height: number
+          highlight: string | null
+          id: number
+          last_updated: string
+          width: number
+          x: number
+          y: number
+        }
+        Insert: {
+          area_name: string
+          capacity_usage?: number
+          height?: number
+          highlight?: string | null
+          id?: number
+          last_updated?: string
+          width?: number
+          x?: number
+          y?: number
+        }
+        Update: {
+          area_name?: string
+          capacity_usage?: number
+          height?: number
+          highlight?: string | null
+          id?: number
+          last_updated?: string
+          width?: number
+          x?: number
+          y?: number
+        }
+        Relationships: []
+      }
+      thresholds: {
+        Row: {
+          color: string
+          id: number
+          setting_id: number
+          upper_threshold: number
+        }
+        Insert: {
+          color: string
+          id?: number
+          setting_id: number
+          upper_threshold: number
+        }
+        Update: {
+          color?: string
+          id?: number
+          setting_id?: number
+          upper_threshold?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_setting"
+            columns: ["setting_id"]
+            isOneToOne: false
+            referencedRelation: "area_settings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_setting"
+            columns: ["setting_id"]
+            isOneToOne: false
+            referencedRelation: "area_status"
+            referencedColumns: ["area_number"]
+          },
+        ]
+      }
+      visitor_data: {
+        Row: {
+          amount_visitors: number
+          area_id: number
+          id: string
+          timestamp: string
+        }
+        Insert: {
+          amount_visitors?: number
+          area_id: number
+          id?: string
+          timestamp?: string
+        }
+        Update: {
+          amount_visitors?: number
+          area_id?: number
+          id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_area_id"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "area_settings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_area_id"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "area_status"
+            referencedColumns: ["area_number"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      area_status: {
+        Row: {
+          amount_visitors: number | null
+          area_name: string | null
+          area_number: number | null
+          capacity_usage: number | null
+          height: number | null
+          highlight: string | null
+          thresholds: Json | null
+          width: number | null
+          x: number | null
+          y: number | null
+        }
+        Insert: {
+          amount_visitors?: never
+          area_name?: string | null
+          area_number?: number | null
+          capacity_usage?: number | null
+          height?: number | null
+          highlight?: string | null
+          thresholds?: never
+          width?: number | null
+          x?: number | null
+          y?: number | null
+        }
+        Update: {
+          amount_visitors?: never
+          area_name?: string | null
+          area_number?: number | null
+          capacity_usage?: number | null
+          height?: number | null
+          highlight?: string | null
+          thresholds?: never
+          width?: number | null
+          x?: number | null
+          y?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

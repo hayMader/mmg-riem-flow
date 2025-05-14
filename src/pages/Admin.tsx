@@ -2,19 +2,21 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import ExhibitionMap from '@/components/ExhibitionMap';
-import AreaSettingsForm from '@/components/AreaSettingsForm';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
 import { getAreaSettings } from '@/utils/api';
 import { AreaStatus } from '@/types';
+import AreaSettingsAccordion from '@/components/AreaSettingsAccordion';
+import { Input } from '@/components/ui/input';
+import { Search, Filter } from 'lucide-react';
 
 const Admin = () => {
   const [areas, setAreas] = useState<AreaStatus[]>([]);
   const [selectedArea, setSelectedArea] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [filterText, setFilterText] = useState('');
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -68,6 +70,11 @@ const Admin = () => {
     !area.area_name.toLowerCase().includes('eingang')
   );
 
+  // Filter areas based on search text
+  const filteredAreas = areas.filter(area => 
+    filterText === '' || area.area_name.toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header 
@@ -76,92 +83,116 @@ const Admin = () => {
       />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <Tabs defaultValue="map" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mx-auto mb-4">
-            <TabsTrigger value="map">Kartenübersicht</TabsTrigger>
-            <TabsTrigger value="settings">Bereichseinstellungen</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="map">
-            <ExhibitionMap 
-              autoRefresh={true} 
-              refreshInterval={60000}
-              onDataUpdate={handleDataUpdate} 
-            />
-          </TabsContent>
-          
-          <TabsContent value="settings">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1 bg-white p-4 rounded-lg shadow-sm h-fit">
-                <h3 className="font-medium text-lg mb-2">Bereiche</h3>
-                <Separator className="mb-4" />
-                
-                <ScrollArea className="h-[500px] pr-3">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-muted-foreground">Hallen</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {halls.map(area => (
-                          <Button
-                            key={area.area_number}
-                            variant={selectedArea === area.area_number ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedArea(area.area_number)}
-                          >
-                            {area.area_name}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-muted-foreground">Eingänge</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {entrances.map(area => (
-                          <Button
-                            key={area.area_number}
-                            variant={selectedArea === area.area_number ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedArea(area.area_number)}
-                          >
-                            {area.area_name}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {other.length > 0 && (
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Andere Bereiche</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {other.map(area => (
-                            <Button
-                              key={area.area_number}
-                              variant={selectedArea === area.area_number ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setSelectedArea(area.area_number)}
-                            >
-                              {area.area_name}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left column: Map + Areas list */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-medium">Aktueller Besucherfüllstand</h2>
+                <div className="text-gray-500">
+                  {new Date().toLocaleDateString('de-DE', {
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}Uhr
+                </div>
               </div>
               
-              <div className="lg:col-span-2">
-                {selectedArea !== null && (
-                  <AreaSettingsForm
-                    area={areas.find(a => a.area_number === selectedArea)!}
-                    onUpdate={handleAreaUpdate}
-                  />
-                )}
-              </div>
+              <ExhibitionMap 
+                autoRefresh={true} 
+                refreshInterval={60000}
+                onDataUpdate={handleDataUpdate} 
+                onAreaSelect={setSelectedArea}
+                selectedArea={selectedArea}
+              />
             </div>
-          </TabsContent>
-        </Tabs>
+            
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-medium text-lg">Hallen und Gelände</h3>
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="Suchen..."
+                    className="pl-9 h-10"
+                    value={filterText}
+                    onChange={(e) => setFilterText(e.target.value)}
+                  />
+                </div>
+              </div>
+              <Separator className="mb-4" />
+              
+              <div className="flex flex-wrap gap-2">
+                {halls.map(area => (
+                  <Button
+                    key={area.area_number}
+                    variant={selectedArea === area.area_number ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedArea(area.area_number)}
+                  >
+                    {area.area_name}
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="mt-4 flex flex-wrap gap-2">
+                {entrances.map(area => (
+                  <Button
+                    key={area.area_number}
+                    variant={selectedArea === area.area_number ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedArea(area.area_number)}
+                  >
+                    {area.area_name}
+                  </Button>
+                ))}
+              </div>
+              
+              {other.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {other.map(area => (
+                    <Button
+                      key={area.area_number}
+                      variant={selectedArea === area.area_number ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedArea(area.area_number)}
+                    >
+                      {area.area_name}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Right column: Area settings */}
+          <div className="lg:col-span-1">
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-medium text-lg">Bereichseinstellungen</h3>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter
+                </Button>
+              </div>
+              <Separator className="mb-4" />
+              
+              {selectedArea !== null ? (
+                <AreaSettingsAccordion
+                  area={areas.find(a => a.area_number === selectedArea)!}
+                  onUpdate={handleAreaUpdate}
+                />
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  Bitte wählen Sie einen Bereich aus, um die Einstellungen zu bearbeiten.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </main>
       
       <footer className="bg-white border-t py-4">
