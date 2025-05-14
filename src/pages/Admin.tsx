@@ -4,19 +4,22 @@ import Header from '@/components/Header';
 import ExhibitionMap from '@/components/ExhibitionMap';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
 import { getAreaSettings } from '@/utils/api';
 import { AreaStatus } from '@/types';
 import AreaSettingsAccordion from '@/components/AreaSettingsAccordion';
 import { Input } from '@/components/ui/input';
 import { Search, Filter } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Admin = () => {
   const [areas, setAreas] = useState<AreaStatus[]>([]);
   const [selectedArea, setSelectedArea] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -52,6 +55,15 @@ const Admin = () => {
     setAreas(newAreaStatus);
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    toast({
+      title: "Abgemeldet",
+      description: "Sie wurden erfolgreich abgemeldet."
+    });
+  };
+
   // Group areas by type (halls, parking, etc.)
   const halls = areas.filter(area => 
     area.area_name.startsWith('A') || 
@@ -78,7 +90,8 @@ const Admin = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header 
-        title="Management Console" 
+        title="Willkommen im Management Dashboard"
+        subtitle={user?.name ? user.name : undefined}
         isAdmin={true} 
       />
       
