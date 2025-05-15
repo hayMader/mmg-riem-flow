@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { LogIn, LogOut, Settings } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HeaderProps {
   title: string;
@@ -11,6 +11,14 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ title, subtitle, isAdmin = false }) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <header className="bg-white shadow-sm border-b px-4 py-3" style={{ maxHeight: '10vh' }}>
       <div className="container mx-auto flex justify-between items-center">
@@ -41,17 +49,21 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle, isAdmin = false }) => 
         </div>
         
         <div className="flex items-center gap-2">
-          {isAdmin ? (
-            <Button asChild variant="outline" size="sm">
-              <Link to="/">
-                <LogIn className="h-4 w-4 mr-2" />
+          {user?.isAuthenticated ? (
+            window.location.pathname === '/' ? (
+              <Link to="/admin">
+                <Settings className="h-4 w-4 mr-2" />
+              </Link>
+            ) : (
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
                 Abmelden
-              </Link>
-            </Button>
+              </Button>
+            )
           ) : (
-              <Link to="/login">
+            <Link to="/login">
                 <LogIn className="h-4 w-4 mr-2" />
-              </Link>
+            </Link>
           )}
         </div>
       </div>

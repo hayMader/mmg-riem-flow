@@ -10,6 +10,7 @@ interface AuthContextType {
   user: AuthUser | null;
   login: (user: AuthUser) => void;
   logout: () => void;
+  getCurrentUser: () => AuthUser | null;
   isLoading: boolean; // Add loading state
 }
 
@@ -17,6 +18,7 @@ const defaultAuthContext: AuthContextType = {
   user: null,
   login: () => {},
   logout: () => {},
+  getCurrentUser: () => null,
   isLoading: true, // Default to loading
 };
 
@@ -29,21 +31,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   useEffect(() => {
+    const currentUser = getCurrentUser();
+    setUser(currentUser)
+  }, []);
+
+  const getCurrentUser = () => {
     // Check if user is already logged in
     const storedAuth = localStorage.getItem('auth');
     if (storedAuth) {
       try {
         const authData = JSON.parse(storedAuth);
         if (authData.isAuthenticated) {
-          setUser(authData);
+          return authData;
         }
       } catch (error) {
         console.error('Failed to parse auth data:', error);
         localStorage.removeItem('auth');
       }
     }
-    setIsLoading(false); // Mark loading as complete
-  }, []);
+  };
 
   const login = (userData: AuthUser) => {
     setUser(userData);
@@ -56,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, getCurrentUser }}>
       {children}
     </AuthContext.Provider>
   );

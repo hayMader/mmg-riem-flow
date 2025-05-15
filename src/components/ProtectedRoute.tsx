@@ -7,16 +7,9 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, isLoading } = useAuth();
+  const { getCurrentUser } = useAuth();
 
-  // Show loading state or spinner while checking authentication
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
+  const user = getCurrentUser();
 
   // Redirect to login if not authenticated
   if (!user?.isAuthenticated) {
