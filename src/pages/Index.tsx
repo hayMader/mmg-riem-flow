@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import ExhibitionMap from '@/components/ExhibitionMap';
@@ -20,7 +19,7 @@ const Index = () => {
         subtitle={latestTimestamp ? `${latestTimestamp} Uhr` : undefined}
       />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 overflow-hidden flex items-center justify-center" style={{ maxHeight: '85vh' }}>
         <ExhibitionMap 
           autoRefresh={true}
           refreshInterval={60000} // 60 seconds
@@ -28,10 +27,8 @@ const Index = () => {
         />
       </main>
       
-      <footer className="bg-white border-t py-4">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} MMG-Messegelände München Riem</p>
-        </div>
+      <footer className="bg-white border-t py-2 text-center text-sm text-muted-foreground" style={{ maxHeight: '5vh' }}>
+        <p>© {new Date().getFullYear()} MMG-Messegelände München Riem</p>
       </footer>
     </div>
   );

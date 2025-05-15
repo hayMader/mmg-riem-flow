@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { AreaStatus } from '@/types';
@@ -80,7 +79,7 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-96">
+      <div className="flex flex-col items-center justify-center h-full">
         <RefreshCw className="h-10 w-10 text-primary animate-spin" />
         <p className="mt-4 text-lg text-muted-foreground">Daten werden geladen...</p>
       </div>
@@ -88,8 +87,8 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
   }
 
   return (
-    <div className="relative bg-white rounded-lg overflow-hidden">
-      <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+    <div className="relative h-full w-full flex flex-col items-center justify-center overflow-hidden">
+      <div className="absolute top-4 right-4 z-10">
         <button 
           onClick={handleRefresh}
           disabled={isRefreshing}
@@ -102,17 +101,22 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
         </button>
       </div>
       
-      {/* Map container with the exhibition layout */}
-      <div className="relative w-full h-[500px] overflow-auto bg-occupancy-bg p-4">
-        <div className="relative w-full h-full">
-          {/* Floor plan background image */}
-          <div className="absolute inset-0 bg-gray-100">
-            {/* Optional: Display a real floor plan image */}
-            {/* <img src="/map-background.png" alt="MMG Messegelände" className="w-full h-full object-contain" /> */}
-          </div>
+      {/* Map container with responsive scaling */}
+      <div className="relative h-full w-full flex items-center justify-center">
+        {/* Floor plan background image */}
+        <div className="relative max-h-full max-w-full">
+          <img 
+            src="/plan-exhibtion-area.jpg" 
+            alt="MMG Messegelände" 
+            className="max-h-[85vh] w-auto object-contain"
+          />
           
-          {/* Areas overlays */}
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 800">
+          {/* SVG overlay positioned absolutely on top of the image */}
+          <svg 
+            className="absolute inset-0 w-full h-full" 
+            viewBox="0 0 2050 1248" 
+            preserveAspectRatio="xMidYMid meet"
+          >
             {/* Exhibition halls */}
             {areaStatus.map((area) => {
               const visitorCount = area.amount_visitors;
@@ -159,29 +163,7 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
                 </g>
               );
             })}
-            
-            {/* Add main labels and routes */}
-            <text x="600" y="30" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16">Paul Henri Spaak Straße</text>
-            <text x="600" y="770" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16">Willy-Brandt-Allee</text>
-            <text x="120" y="400" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16" transform="rotate(90,120,400)">Olof-Palme-Straße</text>
-            <text x="1080" y="400" textAnchor="middle" fill="#0f172a" fontWeight="bold" fontSize="16" transform="rotate(270,1080,400)">Am Messesee</text>
           </svg>
-        </div>
-      </div>
-      
-      {/* Legend */}
-      <div className="p-4 flex flex-wrap gap-4 justify-center border-t">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-occupancy-low"></div>
-          <span className="text-sm">Niedriger Besucherandrang</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-occupancy-medium"></div>
-          <span className="text-sm">Mittlerer Besucherandrang</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-occupancy-high"></div>
-          <span className="text-sm">Hoher Besucherandrang</span>
         </div>
       </div>
     </div>

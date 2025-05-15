@@ -12,7 +12,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ title, subtitle, isAdmin = false }) => {
   return (
-    <header className="bg-white shadow-sm border-b px-4 py-3">
+    <header className="bg-white shadow-sm border-b px-4 py-3" style={{ maxHeight: '10vh' }}>
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center gap-5">
           <Link to="/" className="flex-shrink-0">
@@ -49,12 +49,9 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle, isAdmin = false }) => 
               </Link>
             </Button>
           ) : (
-            <Button asChild variant="outline" size="sm">
               <Link to="/login">
                 <LogIn className="h-4 w-4 mr-2" />
-                Anmelden
               </Link>
-            </Button>
           )}
         </div>
       </div>
