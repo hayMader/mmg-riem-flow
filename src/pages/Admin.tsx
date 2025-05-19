@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Admin = () => {
   const [areas, setAreas] = useState<AreaStatus[]>([]);
-  const [selectedArea, setSelectedArea] = useState<number | null>(null);
+  const [selectedArea, setSelectedArea] = useState<AreaStatus>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
   const { user, logout } = useAuth();
@@ -28,7 +28,7 @@ const Admin = () => {
         
         setAreas(areaData);
         if (areaData.length > 0) {
-          setSelectedArea(areaData[0].area_number);
+          setSelectedArea(areaData[0]);
         }
       } catch (error) {
         console.error('Error fetching initial data:', error);
@@ -47,7 +47,7 @@ const Admin = () => {
 
   const handleAreaUpdate = (updatedArea: AreaStatus) => {
     setAreas(areas.map(area => 
-      area.area_number === updatedArea.area_number ? updatedArea : area
+      area.id === updatedArea.id ? updatedArea : area
     ));
   };
 
@@ -141,10 +141,10 @@ const Admin = () => {
               <div className="flex flex-wrap gap-2">
                 {halls.map(area => (
                   <Button
-                    key={area.area_number}
-                    variant={selectedArea === area.area_number ? "default" : "outline"}
+                    key={area.id}
+                    variant={selectedArea === area ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedArea(area.area_number)}
+                    onClick={() => setSelectedArea(area)}
                   >
                     {area.area_name}
                   </Button>
@@ -154,10 +154,10 @@ const Admin = () => {
               <div className="mt-4 flex flex-wrap gap-2">
                 {entrances.map(area => (
                   <Button
-                    key={area.area_number}
-                    variant={selectedArea === area.area_number ? "default" : "outline"}
+                    key={area.id}
+                    variant={selectedArea === area ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedArea(area.area_number)}
+                    onClick={() => setSelectedArea(area)}
                   >
                     {area.area_name}
                   </Button>
@@ -168,10 +168,10 @@ const Admin = () => {
                 <div className="mt-4 flex flex-wrap gap-2">
                   {other.map(area => (
                     <Button
-                      key={area.area_number}
-                      variant={selectedArea === area.area_number ? "default" : "outline"}
+                      key={area.id}
+                      variant={selectedArea === area ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setSelectedArea(area.area_number)}
+                      onClick={() => setSelectedArea(area)}
                     >
                       {area.area_name}
                     </Button>
@@ -195,7 +195,7 @@ const Admin = () => {
               
               {selectedArea !== null ? (
                 <AreaSettingsAccordion
-                  area={areas.find(a => a.area_number === selectedArea)!}
+                  area={selectedArea}
                   onUpdate={handleAreaUpdate}
                 />
               ) : (

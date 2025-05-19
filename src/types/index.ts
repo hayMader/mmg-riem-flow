@@ -22,21 +22,21 @@ export interface Threshold {
   id: number;
   setting_id: number;
   upper_threshold: number;
-  color: string;
+  color?: string;
   alert: boolean;
   alert_message: string;
 }
 
 export interface AreaStatus {
-  area_number: number;
+  id: number;
   area_name: string;
   capacity_usage: number;
   x: number;
   y: number;
   width: number;
   height: number;
-  highlight: string | null;
   amount_visitors: number;
+  highlight: string | null;
   thresholds: Threshold[]
 }
 

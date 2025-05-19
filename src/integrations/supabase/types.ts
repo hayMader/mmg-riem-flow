@@ -163,6 +163,10 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      },
+      update_area_settings: {
+        Args: {area_id: number, setting_json: Json}
+        Returns: null
       }
     }
     Enums: {

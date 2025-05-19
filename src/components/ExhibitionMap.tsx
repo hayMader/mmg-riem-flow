@@ -3,13 +3,14 @@ import { toast } from '@/components/ui/use-toast';
 import { AreaStatus, Threshold } from '@/types';
 import { getAreaSettings } from '@/utils/api';
 import { RefreshCw } from 'lucide-react';
+import { Area } from 'recharts';
 
 interface ExhibitionMapProps {
   autoRefresh?: boolean;
   refreshInterval?: number;
   onDataUpdate?: (areaStatus: AreaStatus[]) => void;
-  onAreaSelect?: (areaNumber: number) => void;
-  selectedArea?: number | null;
+  onAreaSelect?: (areaNumber: AreaStatus) => void;
+  selectedArea?: AreaStatus | null;
 }
 
 const ExhibitionMap: React.FC<ExhibitionMapProps> = ({ 
@@ -71,9 +72,9 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
   };
   
   // Handle area click
-  const handleAreaClick = (areaNumber: number) => {
+  const handleAreaClick = (area: AreaStatus) => {
     if (onAreaSelect) {
-      onAreaSelect(areaNumber);
+      onAreaSelect(area);
     }
   };
 
@@ -129,10 +130,10 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
               const visitorCount = area.amount_visitors;
               const thresholds = area.thresholds;
               const activeTreshold = getOccupancyLevel(visitorCount, thresholds);
-              const isSelected = selectedArea === area.area_number;
+              const isSelected = selectedArea === area;
               
               return (
-                <g key={area.area_number}>
+                <g key={area.id}>
                   <rect
                     x={area.x}
                     y={area.y}
@@ -143,7 +144,7 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
                     stroke={isSelected ? "#000" : "#667080"}
                     strokeWidth={isSelected ? 2 : 1}
                     className="exhibition-hall cursor-pointer"
-                    onClick={() => handleAreaClick(area.area_number)}
+                    onClick={() => handleAreaClick(area)}
                   />
                   <text
                     x={area.x + area.width / 2}
