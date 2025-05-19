@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import ExhibitionMap from '@/components/ExhibitionMap';
-import { formatDateTime } from '@/utils/api';
+import { formatDateTime } from '@/utils/formatDatetime';
 import { AreaStatus } from '@/types';
 
 const Index = () => {

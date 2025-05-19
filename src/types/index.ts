@@ -23,6 +23,8 @@ export interface Threshold {
   setting_id: number;
   upper_threshold: number;
   color: string;
+  alert: boolean;
+  alert_message: string;
 }
 
 export interface AreaStatus {
@@ -35,10 +37,7 @@ export interface AreaStatus {
   height: number;
   highlight: string | null;
   amount_visitors: number;
-  thresholds: {
-    low: number;
-    medium: number;
-  };
+  thresholds: Threshold[]
 }
 
 export type OccupancyLevel = 'low' | 'medium' | 'high';

@@ -24,7 +24,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={
-              <ProtectedRoute>
+              <ProtectedRoute> {/* Check if the user is authenticated. If not -> login page */}
                 <Admin />
               </ProtectedRoute>
             } />

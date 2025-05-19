@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { AreaStatus } from '@/types';
-import { getAreaSettings, getOccupancyLevel, getOccupancyColor } from '@/utils/api';
+import { AreaStatus, Threshold } from '@/types';
+import { getAreaSettings } from '@/utils/api';
 import { RefreshCw } from 'lucide-react';
 
 interface ExhibitionMapProps {
@@ -77,6 +77,13 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
     }
   };
 
+  // Function to determine occupancy level based on visitor count and thresholds
+  const getOccupancyLevel = (visitorCount: number, thresholds: Threshold[]) => {
+    // Get the highest threshold that is less than or equal to the visitor count
+    const activeThreshold = thresholds.find(threshold => visitorCount <= threshold.upper_threshold);
+    return activeThreshold
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -121,8 +128,7 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
             {areaStatus.map((area) => {
               const visitorCount = area.amount_visitors;
               const thresholds = area.thresholds;
-              const occupancyLevel = getOccupancyLevel(visitorCount, thresholds);
-              const fillColor = getOccupancyColor(occupancyLevel);
+              const activeTreshold = getOccupancyLevel(visitorCount, thresholds);
               const isSelected = selectedArea === area.area_number;
               
               return (
@@ -132,7 +138,7 @@ const ExhibitionMap: React.FC<ExhibitionMapProps> = ({
                     y={area.y}
                     width={area.width}
                     height={area.height}
-                    fill={area.highlight || fillColor}
+                    fill={area.highlight || activeTreshold?.color || 'lightgray'}
                     fillOpacity={0.7}
                     stroke={isSelected ? "#000" : "#667080"}
                     strokeWidth={isSelected ? 2 : 1}
