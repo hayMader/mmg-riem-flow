@@ -45,11 +45,6 @@ In der aktuellen Version werden Mockdaten verwendet, die in einer späteren Vers
 
 Für die Zukunft sind folgende Erweiterungen geplant:
 
-- Anbindung an eine echte SQL-Datenbank
-- Implementierung einer Authentifizierung für die Management-Konsole
-- Weitere Visualisierungsmöglichkeiten wie Heatmaps oder Trendanalysen
-- Export- und Berichtsfunktionen
+- Management console
+- Security console
 
-## Project URL
-
-**URL**: https://lovable.dev/projects/3c64987b-355b-4586-8bbe-10107fa1cea4
